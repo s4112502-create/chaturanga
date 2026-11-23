@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to play Chaturanga: Kurukshetra 3D—the ancient Indian strategy game behind modern chess, inspired by the Mahabharat.">
+    <title>How to Play & Lore — Chaturanga: Kurukshetra 3D</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background: radial-gradient(circle at top, #241307, #0d0602 70%);
+            color: #efe3cf; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.65;
+        }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 28px; border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+            background: rgba(18, 10, 4, 0.9); position: sticky; top: 0; backdrop-filter: blur(8px);
+        }
+        .brand {
+            font-family: 'Georgia', serif; font-size: 20px; font-weight: bold;
+            color: #f5d061; letter-spacing: 1.5px; text-decoration: none;
+        }
+        nav { display: flex; gap: 18px; align-items: center; }
+        nav a { color: #e2cfa4; text-decoration: none; font-size: 14px; font-weight: 600; }
+        nav a:hover { color: #fff; }
+        .cta {
+            background: linear-gradient(to bottom, #dfb94e, #9c6b19); color: #1a0f00 !important;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid #ffefb8;
+        }
+        main { max-width: 920px; margin: 0 auto; padding: 36px 20px 64px; }
+        h1, h2, h3 { font-family: 'Georgia', serif; color: #f5d061; }
+        h1 { font-size: 36px; margin-bottom: 10px; }
+        h2 { font-size: 24px; margin-top: 38px; border-bottom: 1px solid rgba(212, 175, 55, 0.25); padding-bottom: 6px; }
+        .lead { font-size: 17px; color: #dfd0b4; max-width: 720px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 18px; }
+        .card {
+            background: rgba(34, 19, 8, 0.78); border: 1px solid rgba(212, 175, 55, 0.4);
+            border-radius: 12px; padding: 18px;
+        }
+        .card h3 { margin: 0 0 6px 0; font-size: 18px; }
+        .card p { margin: 0; font-size: 14px; color: #ddd0b8; }
+        footer {
+            text-align: center; padding: 24px; border-top: 1px solid rgba(212, 175, 55, 0.2);
+            color: #a99672; font-size: 13px;
+        }
+        footer a { color: #f5d061; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <a class="brand" href="index.html">CHATURANGA: KURUKSHETRA</a>
+        <nav>
+            <a href="about.html">Rules & Lore</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a class="cta" href="index.html">⚔️ Play 3D Game</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>The Ancient War Game of Kurukshetra</h1>
+        <p class="lead">
+            Long before modern chess spread across the world, ancient India played <strong>Chaturanga</strong>—literally meaning
+            <em>"four limbs"</em>—representing the four divisions of a royal army: Infantry, Cavalry, Elephants, and Chariots.
+            <strong>Chaturanga: Kurukshetra 3D</strong> brings that battlefield to life with 3D warriors, dynamic camera angles,
+            and cinematic combat animations.
+        </p>
+
+        <h2>Meet the Six Warriors</h2>
+        <div class="grid">
+            <div class="card">
+                <h3>♔ Raja (King)</h3>
+                <p>The sovereign leader crowned with the royal <em>Chatra</em> umbrella. Moves one square in any direction. Protect your Raja at all costs—if he falls in checkmate, the war is lost.</p>
+            </div>
+            <div class="card">
+                <h3>♕ Mantri (Queen)</h3>
+                <p>The supreme commander wielding the <em>Khanda</em> sword. Moves any number of squares horizontally, vertically, or diagonally across the battlefield.</p>
+            </div>
+            <div class="card">
+                <h3>♖ Ratha (Rook)</h3>
+                <p>The armored war chariot with spoked wheels and temple canopy. Charges in straight lines along any rank or file.</p>
+            </div>
+            <div class="card">
+                <h3>♗ Gaja (Bishop)</h3>
+                <p>The armored war elephant carrying a royal <em>Howdah</em>. Sweeps diagonally across the battlefield to ambush enemy flanks.</p>
+            </div>
+            <div class="card">
+                <h3>♘ Ashva (Knight)</h3>
+                <p>The swift warhorse of the cavalry. Leaps in an L-shape (two squares in one direction and one perpendicular) and can jump over other warriors.</p>
+            </div>
+            <div class="card">
+                <h3>♙ Padati (Pawn)</h3>
+                <p>Foot soldiers armed with spear and shield. March forward one square (two on their opening move) and capture diagonally. Reaching the 8th rank promotes them to a higher commander.</p>
+            </div>
+        </div>
+
+        <h2>Controls & Tips</h2>
+        <div class="card" style="margin-top: 14px;">
+            <p>
+                <strong>• Move Warriors:</strong> Click any highlighted gold or crimson piece (your army) to see legal move dots and red capture rings, then click the target square.<br>
+                <strong>• Camera Control:</strong> Drag with your mouse (or finger) to orbit the 3D battlefield, scroll to zoom, or switch instantly between <strong>Classic 3D</strong>, <strong>War Angle</strong>, and <strong>Top 2D</strong>.<br>
+                <strong>• AI Opponents:</strong> Challenge <em>Shishya (Easy)</em>, <em>Yoddha (Medium)</em>, or <em>Acharya Drona (Hard)</em> as either the Pandavas or Kauravas.
+            </p>
+        </div>
+    </main>
+
+    <footer>
+        © 2026 Chaturanga: Kurukshetra 3D · <a href="index.html">Play Game</a> · <a href="privacy.html">Privacy Policy</a>
+    </footer>
+</body>
+</html>
