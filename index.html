@@ -24,6 +24,11 @@
             font-family: 'Georgia', serif; font-size: 14px; font-weight: bold;
             letter-spacing: 1px; white-space: nowrap;
         }
+        #elo-pill {
+            background: rgba(212, 175, 55, 0.16); border: 1px solid rgba(212, 175, 55, 0.55);
+            color: #f5d061; font-size: 12px; font-weight: 700;
+            padding: 2px 8px; border-radius: 12px; white-space: nowrap;
+        }
         #status {
             margin: 0; color: #f4efe6; font-size: 12.5px; font-weight: 500;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -107,6 +112,7 @@
         .setup-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #d8c294; margin: 12px 0 6px 0; text-align: left; }
         .setup-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .setup-row button { flex: 1; padding: 9px 8px; }
+        #gameover-elo { font-size: 18px; font-weight: 700; margin: -6px 0 16px; }
         @media (max-width: 680px) {
             .brand-title { display: none; }
             #status { font-size: 12px; }
@@ -120,6 +126,7 @@
     <div id="topbar">
         <div class="brand-wrap">
             <span class="brand-title">⚔️ CHATURANGA</span>
+            <span id="elo-pill" title="Your Chaturanga Elo Rating">🏆 <span id="elo-badge">1000</span></span>
             <p id="status">Pandavas (Gold) Turn</p>
         </div>
         <div class="bar-actions">
@@ -131,6 +138,11 @@
     </div>
 
     <div id="drawer">
+        <div class="drawer-label">Your Rating & Record</div>
+        <div class="captured-row" style="margin-bottom: 8px;">
+            <span id="drawer-stats" style="font-size: 12.5px; color: #f5d061;">Elo: 1000 · W:0 D:0 L:0</span>
+            <button class="secondary" style="padding: 2px 7px; font-size: 11px;" onclick="resetElo()">Reset</button>
+        </div>
         <div class="drawer-label">Camera Angle</div>
         <div class="btn-group">
             <button id="cam-classic" class="secondary active" onclick="setCameraPreset('classic')">Classic 3D</button>
@@ -169,9 +181,9 @@
             </div>
             <div class="setup-label">AI Difficulty</div>
             <div class="setup-row">
-                <button id="diff-easy" class="secondary" onclick="selectSetupDiff('easy')">Shishya (Easy)</button>
-                <button id="diff-medium" class="secondary active" onclick="selectSetupDiff('medium')">Yoddha (Med)</button>
-                <button id="diff-hard" class="secondary" onclick="selectSetupDiff('hard')">Drona (Hard)</button>
+                <button id="diff-easy" class="secondary" onclick="selectSetupDiff('easy')">Shishya (600)</button>
+                <button id="diff-medium" class="secondary active" onclick="selectSetupDiff('medium')">Yoddha (1100)</button>
+                <button id="diff-hard" class="secondary" onclick="selectSetupDiff('hard')">Drona (1600)</button>
             </div>
             <button onclick="startNewWar()" style="width:100%; padding: 11px; font-size: 14px; margin-top: 8px;">⚔️ Begin Battle</button>
             <div style="margin-top: 10px; font-size: 12px;">
@@ -198,6 +210,7 @@
         <div class="modal-card">
             <h2 id="gameover-title">VICTORY!</h2>
             <p id="gameover-desc">The Kaurava Raja has fallen!</p>
+            <div id="gameover-elo"></div>
             <button onclick="closeGameOverAndReset()" style="padding: 10px 22px; font-size: 14px;">⚔️ Fight Again</button>
         </div>
     </div>
@@ -1281,14 +1294,56 @@
             updateStatus();
         }
 
+        // --- 7B. PERSISTENT ELO RATING SYSTEM ---
+        const AI_ELO = { easy: 600, medium: 1100, hard: 1600 };
+        let playerElo = parseInt(localStorage.getItem('chaturanga_elo') || '1000', 10);
+        let playerStats = JSON.parse(localStorage.getItem('chaturanga_stats') || '{"w":0,"d":0,"l":0}');
+        let eloAwardedThisGame = false;
+
+        function renderEloUI() {
+            document.getElementById('elo-badge').innerText = playerElo;
+            document.getElementById('drawer-stats').innerText =
+                `Elo: ${playerElo} · W:${playerStats.w} D:${playerStats.d} L:${playerStats.l}`;
+        }
+
+        function resetElo() {
+            playerElo = 1000;
+            playerStats = { w: 0, d: 0, l: 0 };
+            localStorage.setItem('chaturanga_elo', String(playerElo));
+            localStorage.setItem('chaturanga_stats', JSON.stringify(playerStats));
+            renderEloUI();
+        }
+
+        function applyEloResult(outcome) {
+            if (eloAwardedThisGame) return null;
+            eloAwardedThisGame = true;
+            const oppElo = AI_ELO[aiDifficulty] || 1100;
+            const expected = 1 / (1 + Math.pow(10, (oppElo - playerElo) / 400));
+            let delta = Math.round(32 * (outcome - expected));
+            if (outcome === 1) delta = Math.max(5, delta);
+            playerElo = Math.max(100, playerElo + delta);
+
+            if (outcome === 1) playerStats.w++;
+            else if (outcome === 0.5) playerStats.d++;
+            else playerStats.l++;
+
+            localStorage.setItem('chaturanga_elo', String(playerElo));
+            localStorage.setItem('chaturanga_stats', JSON.stringify(playerStats));
+            renderEloUI();
+            return { newElo: playerElo, delta };
+        }
+        renderEloUI();
+
         function resetGame() {
             if (activeAnim) return;
             chess.reset();
             selectedSquare = null;
             lastMove = null;
             pendingPromotion = null;
+            eloAwardedThisGame = false;
             document.getElementById('promo-modal').classList.remove('open');
             document.getElementById('gameover-modal').classList.remove('open');
+            document.getElementById('gameover-elo').innerText = '';
             clearMoveMarkers();
             renderPieces();
             setCameraPreset(currentCamPreset || 'classic', true);
@@ -1307,6 +1362,8 @@
                 statusEl.innerText = playerWon ? `VICTORY! ${yourArmy} Won by Checkmate!` : 'DEFEAT! Drona AI Won by Checkmate!';
                 showBanner('CHECKMATE!');
                 playSound('victory');
+
+                const eloRes = applyEloResult(playerWon ? 1 : 0);
 
                 const kAlg = findKingSquare(turn);
                 const kMesh = pieceMeshes.find(p => p.userData.algebraic === kAlg);
@@ -1335,15 +1392,28 @@
                     document.getElementById('gameover-desc').innerText = playerWon
                         ? `You defeated Drona AI in ${chess.history().length} moves!`
                         : `Drona AI checkmated your Raja in ${chess.history().length} moves.`;
+                    if (eloRes) {
+                        const eloEl = document.getElementById('gameover-elo');
+                        const sign = eloRes.delta >= 0 ? '+' : '';
+                        eloEl.style.color = eloRes.delta >= 0 ? '#4caf50' : '#ff6b6b';
+                        eloEl.innerText = `🏆 Elo: ${eloRes.newElo} (${sign}${eloRes.delta})`;
+                    }
                     document.getElementById('gameover-modal').classList.add('open');
                 }, 1150);
 
             } else if (chess.in_draw()) {
                 statusEl.innerText = 'DRAW! Battle ended in a Stalemate.';
                 showBanner('DRAW!');
+                const eloRes = applyEloResult(0.5);
                 setTimeout(() => {
                     document.getElementById('gameover-title').innerText = 'STALEMATE';
                     document.getElementById('gameover-desc').innerText = `The battle ended in a draw after ${chess.history().length} moves.`;
+                    if (eloRes) {
+                        const eloEl = document.getElementById('gameover-elo');
+                        const sign = eloRes.delta >= 0 ? '+' : '';
+                        eloEl.style.color = eloRes.delta >= 0 ? '#4caf50' : '#ff6b6b';
+                        eloEl.innerText = `🏆 Elo: ${eloRes.newElo} (${sign}${eloRes.delta})`;
+                    }
                     document.getElementById('gameover-modal').classList.add('open');
                 }, 900);
             } else if (chess.in_check()) {
