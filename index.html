@@ -935,8 +935,10 @@
 
             if (moveObj.captured && cinemaEnabled && !chess.in_checkmate()) {
                 savedCamState = { pos: camera.position.clone(), target: controls.target.clone() };
+                const zDir = playerColor === 'w' ? 1 : -1;
+                const swoopZ = Math.max(-8.5, Math.min(8.5, targetPos.z + 4.4 * zDir));
                 cameraLerpTarget = {
-                    pos: new THREE.Vector3(targetPos.x * 0.55, 5.4, Math.min(8.5, targetPos.z + 4.4)),
+                    pos: new THREE.Vector3(targetPos.x * 0.55, 5.4, swoopZ),
                     target: new THREE.Vector3(targetPos.x, 0.55, targetPos.z)
                 };
             }
@@ -1200,6 +1202,12 @@
         });
 
         window.addEventListener('click', (e) => {
+            const drawer = document.getElementById('drawer');
+            const menuBtn = document.getElementById('menu-btn');
+            if (drawer && drawer.classList.contains('open') && !drawer.contains(e.target) && e.target !== menuBtn) {
+                drawer.classList.remove('open');
+                menuBtn.classList.remove('active');
+            }
             if (e.target.tagName === 'BUTTON' || activeAnim || pendingPromotion || chess.turn() !== playerColor || chess.game_over()) return;
 
             mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
