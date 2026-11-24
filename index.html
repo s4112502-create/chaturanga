@@ -113,6 +113,11 @@
         .setup-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .setup-row button { flex: 1; padding: 9px 8px; }
         #gameover-elo { font-size: 18px; font-weight: 700; margin: -6px 0 16px; }
+        .pvp-box { background: rgba(0,0,0,0.35); border: 1px solid rgba(212,175,55,0.45); border-radius: 10px; padding: 12px; margin-top: 8px; }
+        .room-code-big { font-family: ui-monospace, monospace; font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #ffd700; margin: 4px 0 8px; }
+        .pvp-input { flex: 1; background: rgba(0,0,0,0.45); border: 1px solid rgba(212,175,55,0.55); border-radius: 6px; color: #fff; font-size: 16px; font-weight: 700; text-align: center; letter-spacing: 3px; padding: 8px; outline: none; }
+        .pvp-input::placeholder { letter-spacing: 0; font-size: 12px; color: #9c8a6b; }
+        #pvp-status { font-size: 12.5px; color: #f5d061; margin-top: 8px; min-height: 18px; }
         @media (max-width: 680px) {
             .brand-title { display: none; }
             #status { font-size: 12px; }
@@ -121,6 +126,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
     <div id="topbar">
@@ -130,7 +136,7 @@
             <p id="status">Pandavas (Gold) Turn</p>
         </div>
         <div class="bar-actions">
-            <button onclick="undoMove()" title="Undo Move">↩ Undo</button>
+            <button id="undo-btn" onclick="undoMove()" title="Undo Move">↩ Undo</button>
             <button onclick="openSetupModal()">New War</button>
             <button id="sound-btn" class="secondary active" onclick="toggleSound()" title="Toggle Sound">🔊</button>
             <button id="menu-btn" class="secondary" onclick="toggleDrawer()">⚙️ Menu</button>
@@ -173,19 +179,39 @@
     <div id="setup-modal" class="modal-backdrop open">
         <div class="modal-card">
             <h2>Enter Kurukshetra</h2>
-            <p>Choose your army and AI commander strength.</p>
-            <div class="setup-label">Your Army</div>
+            <p>Choose AI practice or 1v1 online friend battle.</p>
             <div class="setup-row">
-                <button id="pick-w" class="secondary active" onclick="selectSetupSide('w')">👑 Pandavas (Gold)</button>
-                <button id="pick-b" class="secondary" onclick="selectSetupSide('b')">🔥 Kauravas (Crimson)</button>
+                <button id="mode-ai" class="secondary active" onclick="selectBattleMode('ai')">🤖 vs AI</button>
+                <button id="mode-pvp" class="secondary" onclick="selectBattleMode('pvp')">⚔️ 1v1 Friend</button>
             </div>
-            <div class="setup-label">AI Difficulty</div>
-            <div class="setup-row">
-                <button id="diff-easy" class="secondary" onclick="selectSetupDiff('easy')">Shishya (600)</button>
-                <button id="diff-medium" class="secondary active" onclick="selectSetupDiff('medium')">Yoddha (1100)</button>
-                <button id="diff-hard" class="secondary" onclick="selectSetupDiff('hard')">Drona (1600)</button>
+            <div id="ai-setup-panel">
+                <div class="setup-label">Your Army</div>
+                <div class="setup-row">
+                    <button id="pick-w" class="secondary active" onclick="selectSetupSide('w')">👑 Pandavas (Gold)</button>
+                    <button id="pick-b" class="secondary" onclick="selectSetupSide('b')">🔥 Kauravas (Crimson)</button>
+                </div>
+                <div class="setup-label">AI Difficulty</div>
+                <div class="setup-row">
+                    <button id="diff-easy" class="secondary" onclick="selectSetupDiff('easy')">Shishya (600)</button>
+                    <button id="diff-medium" class="secondary active" onclick="selectSetupDiff('medium')">Yoddha (1100)</button>
+                    <button id="diff-hard" class="secondary" onclick="selectSetupDiff('hard')">Drona (1600)</button>
+                </div>
+                <button onclick="startNewWar()" style="width:100%; padding: 11px; font-size: 14px; margin-top: 8px;">⚔️ Begin Battle</button>
             </div>
-            <button onclick="startNewWar()" style="width:100%; padding: 11px; font-size: 14px; margin-top: 8px;">⚔️ Begin Battle</button>
+            <div id="pvp-setup-panel" style="display:none;">
+                <button id="create-room-btn" onclick="createPvpRoom()" style="width:100%; padding: 10px; font-size: 13.5px;">👑 Create Room (Play Pandavas)</button>
+                <div id="pvp-room-box" class="pvp-box" style="display:none;">
+                    <div style="font-size:11px; color:#cbb588; text-transform:uppercase;">Share 4-Digit Room Code</div>
+                    <div id="room-code-display" class="room-code-big">----</div>
+                    <button id="copy-invite-btn" class="secondary" onclick="copyInviteLink()" style="width:100%; padding:8px;">📲 Copy WhatsApp Invite Link</button>
+                </div>
+                <div style="margin: 12px 0 8px; font-size: 11px; color: #a99672;">— OR JOIN FRIEND'S ROOM —</div>
+                <div class="setup-row" style="margin-bottom:0;">
+                    <input id="join-code-input" class="pvp-input" type="text" inputmode="numeric" maxlength="4" placeholder="4-digit code">
+                    <button onclick="joinPvpRoom()" style="flex:0 0 auto; padding: 9px 16px;">⚔️ Join</button>
+                </div>
+                <div id="pvp-status"></div>
+            </div>
             <div style="margin-top: 10px; font-size: 12px;">
                 <a href="about.html" style="color:#d4af37; text-decoration:none;">📖 How to Play & Lore</a> ·
                 <a href="privacy.html" style="color:#a99672; text-decoration:none;">Privacy</a>
@@ -1177,9 +1203,128 @@
             executeAnimatedMove(result);
         }
 
-        // --- 7. SETUP MODAL, HOVER TOOLTIP, PROMOTION & CLICK CONTROLS ---
+        // --- 7. SETUP MODAL, 1V1 PEERJS MULTIPLAYER, HOVER & CLICK CONTROLS ---
         let setupSide = 'w';
         let setupDiff = 'medium';
+        let gameMode = 'ai';
+        let peer = null;
+        let conn = null;
+        let onlineOppElo = 1000;
+        let activeRoomCode = '';
+
+        function cleanupPeer() {
+            if (conn) { try { conn.close(); } catch (_) {} conn = null; }
+            if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
+            activeRoomCode = '';
+        }
+
+        function selectBattleMode(mode) {
+            document.getElementById('mode-ai').classList.toggle('active', mode === 'ai');
+            document.getElementById('mode-pvp').classList.toggle('active', mode === 'pvp');
+            document.getElementById('ai-setup-panel').style.display = mode === 'ai' ? 'block' : 'none';
+            document.getElementById('pvp-setup-panel').style.display = mode === 'pvp' ? 'block' : 'none';
+        }
+
+        function setPvpStatus(msg, isError = false) {
+            const el = document.getElementById('pvp-status');
+            el.style.color = isError ? '#ff6b6b' : '#f5d061';
+            el.innerText = msg;
+        }
+
+        function setupConnHandlers(c) {
+            c.on('open', () => {
+                c.send({ type: 'hello', elo: playerElo });
+                document.getElementById('setup-modal').classList.remove('open');
+                resetGame();
+            });
+            c.on('data', (data) => {
+                if (!data || !data.type) return;
+                if (data.type === 'hello') {
+                    onlineOppElo = parseInt(data.elo || '1000', 10);
+                    updateStatus();
+                } else if (data.type === 'move') {
+                    const move = chess.move({ from: data.from, to: data.to, promotion: data.promotion });
+                    if (move) executeAnimatedMove(move);
+                }
+            });
+            c.on('close', () => {
+                if (gameMode === 'pvp' && !chess.game_over()) {
+                    document.getElementById('status').innerText = 'Friend disconnected — Battle paused';
+                }
+            });
+        }
+
+        function createPvpRoom() {
+            if (typeof Peer === 'undefined') {
+                setPvpStatus('Multiplayer library failed to load. Refresh and try again.', true);
+                return;
+            }
+            cleanupPeer();
+            activeRoomCode = String(Math.floor(1000 + Math.random() * 9000));
+            setPvpStatus('Creating room...');
+            peer = new Peer('chaturanga-kuru-' + activeRoomCode);
+            peer.on('open', () => {
+                document.getElementById('room-code-display').innerText = activeRoomCode;
+                document.getElementById('pvp-room-box').style.display = 'block';
+                setPvpStatus('Waiting for your friend to join...');
+            });
+            peer.on('connection', (c) => {
+                if (conn) { c.close(); return; }
+                conn = c;
+                gameMode = 'pvp';
+                playerColor = 'w';
+                onlineOppElo = 1000;
+                setPvpStatus('Friend connected! Entering Kurukshetra...');
+                setupConnHandlers(c);
+            });
+            peer.on('error', (err) => {
+                if (err.type === 'unavailable-id') {
+                    createPvpRoom();
+                } else {
+                    setPvpStatus('Connection error: ' + err.type, true);
+                }
+            });
+        }
+
+        function copyInviteLink() {
+            if (!activeRoomCode) return;
+            const base = window.location.href.split('?')[0];
+            const link = `${base}?room=${activeRoomCode}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(link).then(() => {
+                    const btn = document.getElementById('copy-invite-btn');
+                    btn.innerText = '✅ Link Copied! Send on WhatsApp';
+                    setTimeout(() => { btn.innerText = '📲 Copy WhatsApp Invite Link'; }, 2500);
+                }).catch(() => prompt('Copy this invite link:', link));
+            } else {
+                prompt('Copy this invite link:', link);
+            }
+        }
+
+        function joinPvpRoom(codeArg) {
+            if (typeof Peer === 'undefined') {
+                setPvpStatus('Multiplayer library failed to load. Refresh and try again.', true);
+                return;
+            }
+            const code = (codeArg || document.getElementById('join-code-input').value || '').trim();
+            if (!/^\d{4}$/.test(code)) {
+                setPvpStatus('Please enter a valid 4-digit room code.', true);
+                return;
+            }
+            cleanupPeer();
+            setPvpStatus(`Connecting to room ${code}...`);
+            peer = new Peer();
+            peer.on('open', () => {
+                conn = peer.connect('chaturanga-kuru-' + code, { reliable: true });
+                gameMode = 'pvp';
+                playerColor = 'b';
+                onlineOppElo = 1000;
+                setupConnHandlers(conn);
+            });
+            peer.on('error', () => {
+                setPvpStatus('Room not found. Ask your friend for a fresh code.', true);
+            });
+        }
 
         function selectSetupSide(side) {
             setupSide = side;
@@ -1200,6 +1345,8 @@
         }
 
         function startNewWar() {
+            cleanupPeer();
+            gameMode = 'ai';
             playerColor = setupSide;
             aiDifficulty = setupDiff;
             document.getElementById('setup-modal').classList.remove('open');
@@ -1300,7 +1447,12 @@
                     const move = chess.move({ from: selectedSquare, to: clickedSq });
                     if (move) {
                         selectedSquare = null;
-                        executeAnimatedMove(move, () => setTimeout(makeAIMove, 320));
+                        if (gameMode === 'pvp') {
+                            if (conn && conn.open) conn.send({ type: 'move', from: move.from, to: move.to });
+                            executeAnimatedMove(move);
+                        } else {
+                            executeAnimatedMove(move, () => setTimeout(makeAIMove, 320));
+                        }
                         return;
                     }
                     selectedSquare = null;
@@ -1327,16 +1479,24 @@
             selectedSquare = null;
             document.getElementById('promo-modal').classList.remove('open');
             const move = chess.move({ from, to, promotion: pieceType });
-            if (move) executeAnimatedMove(move, () => setTimeout(makeAIMove, 320));
+            if (move) {
+                if (gameMode === 'pvp') {
+                    if (conn && conn.open) conn.send({ type: 'move', from: move.from, to: move.to, promotion: pieceType });
+                    executeAnimatedMove(move);
+                } else {
+                    executeAnimatedMove(move, () => setTimeout(makeAIMove, 320));
+                }
+            }
         }
 
         function closeGameOverAndReset() {
             document.getElementById('gameover-modal').classList.remove('open');
+            cleanupPeer();
             openSetupModal();
         }
 
         function undoMove() {
-            if (activeAnim) return;
+            if (activeAnim || gameMode === 'pvp') return;
             if (chess.history().length >= 2) {
                 chess.undo();
                 chess.undo();
@@ -1374,7 +1534,7 @@
         function applyEloResult(outcome) {
             if (eloAwardedThisGame) return null;
             eloAwardedThisGame = true;
-            const oppElo = AI_ELO[aiDifficulty] || 1100;
+            const oppElo = gameMode === 'pvp' ? onlineOppElo : (AI_ELO[aiDifficulty] || 1100);
             const expected = 1 / (1 + Math.pow(10, (oppElo - playerElo) / 400));
             let delta = Math.round(32 * (outcome - expected));
             if (outcome === 1) delta = Math.max(5, delta);
@@ -1401,6 +1561,8 @@
             document.getElementById('promo-modal').classList.remove('open');
             document.getElementById('gameover-modal').classList.remove('open');
             document.getElementById('gameover-elo').innerText = '';
+            const undoBtn = document.getElementById('undo-btn');
+            if (undoBtn) undoBtn.style.display = gameMode === 'pvp' ? 'none' : 'inline-block';
             clearMoveMarkers();
             renderPieces();
             setCameraPreset(currentCamPreset || 'classic', true);
@@ -1413,10 +1575,11 @@
             const turn = chess.turn();
             const isPlayerTurn = turn === playerColor;
             const yourArmy = playerColor === 'w' ? 'Pandavas (Gold)' : 'Kauravas (Crimson)';
+            const oppName = gameMode === 'pvp' ? `Friend (${onlineOppElo})` : 'Drona AI';
 
             if (chess.in_checkmate()) {
                 const playerWon = !isPlayerTurn;
-                statusEl.innerText = playerWon ? `VICTORY! ${yourArmy} Won by Checkmate!` : 'DEFEAT! Drona AI Won by Checkmate!';
+                statusEl.innerText = playerWon ? `VICTORY! ${yourArmy} Won by Checkmate!` : `DEFEAT! ${oppName} Won by Checkmate!`;
                 showBanner('CHECKMATE!');
                 playSound('victory');
 
@@ -1447,8 +1610,8 @@
                 setTimeout(() => {
                     document.getElementById('gameover-title').innerText = playerWon ? 'VICTORY!' : 'DEFEAT';
                     document.getElementById('gameover-desc').innerText = playerWon
-                        ? `You defeated Drona AI in ${chess.history().length} moves!`
-                        : `Drona AI checkmated your Raja in ${chess.history().length} moves.`;
+                        ? `You defeated ${oppName} in ${chess.history().length} moves!`
+                        : `${oppName} checkmated your Raja in ${chess.history().length} moves.`;
                     if (eloRes) {
                         const eloEl = document.getElementById('gameover-elo');
                         const sign = eloRes.delta >= 0 ? '+' : '';
@@ -1483,8 +1646,15 @@
                     triggerCheckEffect(kPos.x, kPos.z);
                 }
             } else {
-                statusEl.innerText = isPlayerTurn ? `${yourArmy} Turn — Select a Warrior` : 'Drona AI is thinking...';
+                statusEl.innerText = isPlayerTurn ? `${yourArmy} Turn — Select a Warrior` : `${oppName} is thinking...`;
             }
+        }
+
+        const urlRoom = new URLSearchParams(window.location.search).get('room');
+        if (urlRoom && /^\d{4}$/.test(urlRoom)) {
+            selectBattleMode('pvp');
+            document.getElementById('join-code-input').value = urlRoom;
+            setTimeout(() => joinPvpRoom(urlRoom), 350);
         }
 
 
