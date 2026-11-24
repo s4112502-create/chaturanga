@@ -1254,17 +1254,34 @@
             }
         });
 
-        window.addEventListener('click', (e) => {
+        renderer.domElement.style.touchAction = 'none';
+        let tapStart = null;
+
+        document.addEventListener('pointerdown', (e) => {
             const drawer = document.getElementById('drawer');
             const menuBtn = document.getElementById('menu-btn');
             if (drawer && drawer.classList.contains('open') && !drawer.contains(e.target) && e.target !== menuBtn) {
                 drawer.classList.remove('open');
                 menuBtn.classList.remove('active');
             }
-            if (e.target.tagName === 'BUTTON' || activeAnim || pendingPromotion || chess.turn() !== playerColor || chess.game_over()) return;
+        });
 
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+            tapStart = { x: e.clientX, y: e.clientY, time: Date.now() };
+        });
+
+        renderer.domElement.addEventListener('pointerup', (e) => {
+            if (!tapStart) return;
+            const dist = Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y);
+            const elapsed = Date.now() - tapStart.time;
+            tapStart = null;
+
+            if (dist > 12 || elapsed > 500) return; // Ignore camera orbit drags
+            if (activeAnim || pendingPromotion || chess.turn() !== playerColor || chess.game_over()) return;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
             raycaster.setFromCamera(mouse, camera);
 
             const hits = raycaster.intersectObjects([...moveMarkers, ...squares, ...pieceMeshes], true);
