@@ -155,10 +155,11 @@
             <button id="cam-war" class="secondary" onclick="setCameraPreset('war')">War Angle</button>
             <button id="cam-top" class="secondary" onclick="setCameraPreset('top')">Top 2D</button>
         </div>
-        <div class="drawer-label">Display & Effects</div>
+        <div class="drawer-label">Display &amp; Controls</div>
         <div class="btn-group">
             <button id="label-btn" class="secondary active" onclick="toggleLabels()">♔ Labels: ON</button>
             <button id="cinema-btn" class="secondary active" onclick="toggleCinema()">🎬 Cinema: ON</button>
+            <button id="camlock-btn" class="secondary active" onclick="toggleCamLock()">🔒 Cam: Locked</button>
         </div>
         <div class="drawer-label">Captured Warriors</div>
         <div class="captured-row">
@@ -356,11 +357,11 @@
 
         // --- 2. SCENE, CAMERA PRESETS & LIGHTING ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x120a05);
-        scene.fog = new THREE.FogExp2(0x120a05, 0.022);
+        scene.background = new THREE.Color(0x1c120a);
+        scene.fog = new THREE.FogExp2(0x1c120a, 0.011);
 
         const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 11.4, 6.4); // Default: Classic Chess.com 3D Angle
+        camera.position.set(0, 12.6, 7.2);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -370,21 +371,33 @@
         document.body.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.target.set(0, 0, 0.25);
+        controls.target.set(0, 0, -0.2);
         controls.maxPolarAngle = Math.PI / 2.25;
         controls.minDistance = 6.5;
-        controls.maxDistance = 19;
+        controls.maxDistance = 26;
         controls.enableDamping = true;
+        controls.enableRotate = false;
+        controls.enablePan = false;
         controls.update();
+
+        let camLocked = true;
+        function toggleCamLock() {
+            camLocked = !camLocked;
+            controls.enableRotate = !camLocked;
+            controls.enablePan = !camLocked;
+            const btn = document.getElementById('camlock-btn');
+            btn.innerText = camLocked ? '🔒 Cam: Locked' : '🔓 Cam: Free';
+            btn.classList.toggle('active', camLocked);
+        }
 
         let playerColor = 'w';
         let aiDifficulty = 'medium';
         let currentCamPreset = 'classic';
         let cameraLerpTarget = null;
         const CAMERA_PRESETS = {
-            classic: { pos: new THREE.Vector3(0, 12.6, 7.2), target: new THREE.Vector3(0, 0, -0.2) },
-            war:     { pos: new THREE.Vector3(0, 7.4, 9.8),  target: new THREE.Vector3(0, 0.2, 0) },
-            top:     { pos: new THREE.Vector3(0, 15.6, 1.1), target: new THREE.Vector3(0, 0, -0.2) }
+            classic: { pos: new THREE.Vector3(0, 13.0, 7.5), target: new THREE.Vector3(0, 0, -0.15) },
+            war:     { pos: new THREE.Vector3(0, 8.2, 10.6), target: new THREE.Vector3(0, 0.2, 0) },
+            top:     { pos: new THREE.Vector3(0, 16.2, 1.1), target: new THREE.Vector3(0, 0, -0.1) }
         };
 
         function setCameraPreset(name, instant = false) {
@@ -392,7 +405,9 @@
             if (!p) return;
             currentCamPreset = name;
             const zDir = playerColor === 'w' ? 1 : -1;
-            const targetPos = new THREE.Vector3(p.pos.x, p.pos.y, p.pos.z * zDir);
+            const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+            const fitScale = aspect < 1 ? Math.min(1.88, 0.94 / Math.max(0.46, aspect)) : 1.0;
+            const targetPos = new THREE.Vector3(p.pos.x, p.pos.y * fitScale, p.pos.z * zDir * fitScale);
             const targetLook = new THREE.Vector3(p.target.x, p.target.y, p.target.z * zDir);
             if (instant) {
                 camera.position.copy(targetPos);
@@ -405,23 +420,29 @@
                 document.getElementById('cam-' + k).classList.toggle('active', k === name);
             });
         }
+        setCameraPreset('classic', true);
 
-        scene.add(new THREE.HemisphereLight(0xffe9bd, 0x2b170c, 0.72));
-        const sunLight = new THREE.DirectionalLight(0xffd494, 1.3);
-        sunLight.position.set(6, 15, 8);
+        scene.add(new THREE.HemisphereLight(0xfff5dc, 0x4a2c18, 1.25));
+        const sunLight = new THREE.DirectionalLight(0xffe5b8, 1.85);
+        sunLight.position.set(6, 16, 8);
         sunLight.castShadow = true;
         sunLight.shadow.mapSize.width = 2048;
         sunLight.shadow.mapSize.height = 2048;
         scene.add(sunLight);
 
-        const rimLight = new THREE.DirectionalLight(0xff8844, 0.5);
-        rimLight.position.set(-7, 8, -8);
+        const fillLight = new THREE.DirectionalLight(0xfff0d4, 0.78);
+        fillLight.position.set(-6, 10, 8);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0xffb36b, 0.85);
+        rimLight.position.set(-7, 9, -8);
         scene.add(rimLight);
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            setCameraPreset(currentCamPreset || 'classic', true);
         });
 
         // --- 3. BATTLEFIELD BOARD, COORDINATES & TORCHES ---
@@ -494,8 +515,8 @@
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 const isLight = (row + col) % 2 === 0;
-                const origColor = isLight ? 0xe8d5b5 : 0x3b2214;
-                const mat = new THREE.MeshStandardMaterial({ color: origColor, roughness: 0.36, metalness: 0.08 });
+                const origColor = isLight ? 0xf0dfc2 : 0x5e3824;
+                const mat = new THREE.MeshStandardMaterial({ color: origColor, roughness: 0.34, metalness: 0.08 });
                 const sq = new THREE.Mesh(squareGeo, mat);
                 sq.position.set(col - 3.5, 0, row - 3.5);
                 sq.receiveShadow = true;
@@ -538,12 +559,12 @@
         const pieceLabels = [];
 
         const PIECE_INFO = {
-            p: { name: 'Padati (Pawn)',   glyphW: '♙', glyphB: '♟', val: 1, height: 1.48 },
-            r: { name: 'Ratha (Rook)',    glyphW: '♖', glyphB: '♜', val: 5, height: 1.55 },
-            n: { name: 'Ashva (Knight)',  glyphW: '♘', glyphB: '♞', val: 3, height: 1.45 },
-            b: { name: 'Gaja (Bishop)',   glyphW: '♗', glyphB: '♝', val: 3, height: 1.50 },
-            q: { name: 'Mantri (Queen)',  glyphW: '♕', glyphB: '♛', val: 9, height: 1.78 },
-            k: { name: 'Raja (King)',     glyphW: '♔', glyphB: '♚', val: 0, height: 2.05 }
+            p: { name: 'Padati (Pawn)',   short: 'PAWN',   glyphW: '♙', glyphB: '♟', val: 1, height: 1.44 },
+            r: { name: 'Ratha (Rook)',    short: 'ROOK',   glyphW: '♖', glyphB: '♜', val: 5, height: 1.52 },
+            n: { name: 'Ashva (Knight)',  short: 'KNIGHT', glyphW: '♘', glyphB: '♞', val: 3, height: 1.44 },
+            b: { name: 'Gaja (Bishop)',   short: 'BISHOP', glyphW: '♗', glyphB: '♝', val: 3, height: 1.48 },
+            q: { name: 'Mantri (Queen)',  short: 'QUEEN',  glyphW: '♕', glyphB: '♛', val: 9, height: 1.76 },
+            k: { name: 'Raja (King)',     short: 'KING',   glyphW: '♔', glyphB: '♚', val: 0, height: 2.02 }
         };
 
         function toggleLabels() {
@@ -556,27 +577,49 @@
 
         function createPieceBadgeSprite(type, isWhite) {
             const canvas = document.createElement('canvas');
-            canvas.width = 96; canvas.height = 96;
+            canvas.width = 256; canvas.height = 96;
             const ctx = canvas.getContext('2d');
 
+            const x = 10, y = 16, w = 236, h = 64, r = 32;
             ctx.beginPath();
-            ctx.arc(48, 48, 32, 0, Math.PI * 2);
-            ctx.fillStyle = isWhite ? 'rgba(247, 238, 215, 0.90)' : 'rgba(58, 18, 18, 0.90)';
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+
+            const grad = ctx.createLinearGradient(0, y, 0, y + h);
+            if (isWhite) {
+                grad.addColorStop(0, 'rgba(255, 249, 232, 0.96)');
+                grad.addColorStop(1, 'rgba(235, 214, 168, 0.96)');
+            } else {
+                grad.addColorStop(0, 'rgba(84, 24, 18, 0.96)');
+                grad.addColorStop(1, 'rgba(42, 12, 10, 0.96)');
+            }
+            ctx.fillStyle = grad;
             ctx.fill();
             ctx.lineWidth = 4;
-            ctx.strokeStyle = isWhite ? '#d4af37' : '#c88a2e';
+            ctx.strokeStyle = isWhite ? '#c99a2c' : '#e0a943';
             ctx.stroke();
 
-            ctx.fillStyle = isWhite ? '#241407' : '#f5d061';
-            ctx.font = 'bold 42px serif';
-            ctx.textAlign = 'center';
+            const glyph = isWhite ? PIECE_INFO[type].glyphW : PIECE_INFO[type].glyphB;
+            ctx.fillStyle = isWhite ? '#2a1506' : '#ffd97a';
+            ctx.font = 'bold 34px serif';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
-            ctx.fillText(isWhite ? PIECE_INFO[type].glyphW : PIECE_INFO[type].glyphB, 48, 50);
+            ctx.fillText(glyph, 28, 49);
+
+            ctx.fillStyle = isWhite ? '#2a1506' : '#fff3d6';
+            ctx.font = '800 26px system-ui, -apple-system, sans-serif';
+            ctx.fillText(PIECE_INFO[type].short, 74, 49);
 
             const tex = new THREE.CanvasTexture(canvas);
-            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
             const sprite = new THREE.Sprite(mat);
-            sprite.scale.set(0.32, 0.32, 1);
+            sprite.scale.set(0.76, 0.285, 1);
             sprite.position.y = PIECE_INFO[type].height;
             sprite.visible = showLabels;
             return sprite;
@@ -984,8 +1027,8 @@
                         const isWhite = piece.color === 'w';
                         const warrior = createWarriorModel(
                             piece.type,
-                            isWhite ? 0xf5ebd6 : 0x3b1111,
-                            isWhite ? 0xd4af37 : 0xc88a2e,
+                            isWhite ? 0xfbf2df : 0x63221a,
+                            isWhite ? 0xe2bc4a : 0xd99b38,
                             isWhite
                         );
                         if (!isWhite) warrior.rotation.y = Math.PI;
@@ -1245,6 +1288,15 @@
                 } else if (data.type === 'move') {
                     const move = chess.move({ from: data.from, to: data.to, promotion: data.promotion });
                     if (move) executeAnimatedMove(move);
+                } else if (data.type === 'undo') {
+                    if (chess.history().length >= 1) {
+                        chess.undo();
+                        selectedSquare = null;
+                        lastMove = null;
+                        clearMoveMarkers();
+                        renderPieces();
+                        updateStatus();
+                    }
                 }
             });
             c.on('close', () => {
@@ -1496,12 +1548,19 @@
         }
 
         function undoMove() {
-            if (activeAnim || gameMode === 'pvp') return;
-            if (chess.history().length >= 2) {
-                chess.undo();
-                chess.undo();
-            } else if (chess.history().length === 1 && playerColor === 'w') {
-                chess.undo();
+            if (activeAnim) return;
+            if (gameMode === 'pvp') {
+                if (chess.history().length >= 1) {
+                    chess.undo();
+                    if (conn && conn.open) conn.send({ type: 'undo' });
+                }
+            } else {
+                if (chess.history().length >= 2) {
+                    chess.undo();
+                    chess.undo();
+                } else if (chess.history().length === 1 && playerColor === 'w') {
+                    chess.undo();
+                }
             }
             selectedSquare = null;
             lastMove = null;
@@ -1562,7 +1621,7 @@
             document.getElementById('gameover-modal').classList.remove('open');
             document.getElementById('gameover-elo').innerText = '';
             const undoBtn = document.getElementById('undo-btn');
-            if (undoBtn) undoBtn.style.display = gameMode === 'pvp' ? 'none' : 'inline-block';
+            if (undoBtn) undoBtn.style.display = 'inline-block';
             clearMoveMarkers();
             renderPieces();
             setCameraPreset(currentCamPreset || 'classic', true);
