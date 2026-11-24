@@ -11,41 +11,58 @@
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             user-select: none;
         }
-        #ui {
-            position: absolute; top: 16px; left: 16px; z-index: 5;
-            color: #f5d061; width: 326px;
-            background: linear-gradient(145deg, rgba(24, 14, 6, 0.92), rgba(45, 25, 10, 0.88));
-            padding: 14px 18px; border: 1.5px solid rgba(212, 175, 55, 0.75);
-            border-radius: 12px; backdrop-filter: blur(8px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.55);
+        #topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 8;
+            height: 48px; padding: 0 14px;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            background: linear-gradient(180deg, rgba(22, 12, 5, 0.94), rgba(22, 12, 5, 0.82));
+            border-bottom: 1px solid rgba(212, 175, 55, 0.45);
+            backdrop-filter: blur(8px); color: #f5d061;
         }
-        h1 {
-            margin: 0 0 4px 0; font-size: 18px; letter-spacing: 1.5px;
-            font-family: 'Georgia', serif; text-shadow: 0 2px 4px #000;
+        .brand-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .brand-title {
+            font-family: 'Georgia', serif; font-size: 14px; font-weight: bold;
+            letter-spacing: 1px; white-space: nowrap;
         }
         #status {
-            margin: 0 0 8px 0; color: #f4efe6; font-size: 13px; font-weight: 500;
+            margin: 0; color: #f4efe6; font-size: 12.5px; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .bar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        #drawer {
+            position: fixed; top: 54px; right: 12px; z-index: 9;
+            width: 280px; padding: 14px; border-radius: 12px;
+            background: linear-gradient(145deg, rgba(24, 14, 6, 0.96), rgba(45, 25, 10, 0.94));
+            border: 1.5px solid rgba(212, 175, 55, 0.7);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(10px); color: #f5d061;
+            display: none;
+        }
+        #drawer.open { display: block; }
+        .drawer-label {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+            color: #cbb588; margin: 10px 0 5px;
+        }
+        .drawer-label:first-child { margin-top: 0; }
         .captured-row {
             display: flex; justify-content: space-between; align-items: center;
-            font-size: 13px; color: #d8c8a8; background: rgba(0,0,0,0.28);
-            padding: 5px 9px; border-radius: 6px; margin-bottom: 8px; min-height: 26px;
+            font-size: 13px; color: #d8c8a8; background: rgba(0,0,0,0.32);
+            padding: 5px 9px; border-radius: 6px; min-height: 26px;
         }
         .captured-icons { letter-spacing: 1px; font-size: 15px; }
         #move-log {
-            font-size: 11.5px; color: #e2d4b7; background: rgba(0,0,0,0.3);
-            padding: 5px 8px; border-radius: 6px; margin-bottom: 9px;
-            max-height: 52px; overflow-y: auto; line-height: 1.45;
+            font-size: 11.5px; color: #e2d4b7; background: rgba(0,0,0,0.32);
+            padding: 6px 8px; border-radius: 6px; max-height: 80px;
+            overflow-y: auto; line-height: 1.45;
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-        .btn-group:last-child { margin-bottom: 0; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 6px; }
         button {
             background: linear-gradient(to bottom, #dfb94e, #9c6b19); color: #1a0f00;
-            border: 1px solid #ffefb8; padding: 6px 10px; font-weight: 700;
+            border: 1px solid #ffefb8; padding: 5px 10px; font-weight: 700;
             border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.15s;
         }
-        button:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        button:hover { filter: brightness(1.12); }
         button.secondary {
             background: rgba(255, 255, 255, 0.08); color: #f5d061;
             border: 1px solid rgba(212, 175, 55, 0.45); font-weight: 600;
@@ -54,12 +71,12 @@
             background: rgba(212, 175, 55, 0.28); border-color: #f5d061; color: #fff;
         }
         #hover-pill {
-            position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
             background: rgba(20, 12, 5, 0.88); color: #f5d061;
             border: 1px solid rgba(212, 175, 55, 0.55); border-radius: 20px;
-            padding: 6px 16px; font-size: 13px; font-weight: 600;
+            padding: 5px 14px; font-size: 12.5px; font-weight: 600;
             pointer-events: none; opacity: 0; transition: opacity 0.15s;
-            z-index: 5; letter-spacing: 0.4px;
+            z-index: 5; letter-spacing: 0.3px;
         }
         #hover-pill.visible { opacity: 1; }
         #banner {
@@ -90,10 +107,9 @@
         .setup-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #d8c294; margin: 12px 0 6px 0; text-align: left; }
         .setup-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .setup-row button { flex: 1; padding: 9px 8px; }
-        @media (max-width: 600px) {
-            #ui { width: calc(100vw - 20px); left: 10px; top: 10px; padding: 10px 12px; }
-            h1 { font-size: 15px; }
-            #move-log { display: none; }
+        @media (max-width: 680px) {
+            .brand-title { display: none; }
+            #status { font-size: 12px; }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -101,27 +117,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
-    <div id="ui">
-        <h1>CHATURANGA: KURUKSHETRA</h1>
-        <p id="status">Pandavas (Gold) Turn — Select a Warrior</p>
+    <div id="topbar">
+        <div class="brand-wrap">
+            <span class="brand-title">⚔️ CHATURANGA</span>
+            <p id="status">Pandavas (Gold) Turn</p>
+        </div>
+        <div class="bar-actions">
+            <button onclick="undoMove()" title="Undo Move">↩ Undo</button>
+            <button onclick="openSetupModal()">New War</button>
+            <button id="sound-btn" class="secondary active" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+            <button id="menu-btn" class="secondary" onclick="toggleDrawer()">⚙️ Menu</button>
+        </div>
+    </div>
+
+    <div id="drawer">
+        <div class="drawer-label">Camera Angle</div>
+        <div class="btn-group">
+            <button id="cam-classic" class="secondary active" onclick="setCameraPreset('classic')">Classic 3D</button>
+            <button id="cam-war" class="secondary" onclick="setCameraPreset('war')">War Angle</button>
+            <button id="cam-top" class="secondary" onclick="setCameraPreset('top')">Top 2D</button>
+        </div>
+        <div class="drawer-label">Display & Effects</div>
+        <div class="btn-group">
+            <button id="label-btn" class="secondary active" onclick="toggleLabels()">♔ Labels: ON</button>
+            <button id="cinema-btn" class="secondary active" onclick="toggleCinema()">🎬 Cinema: ON</button>
+        </div>
+        <div class="drawer-label">Captured Warriors</div>
         <div class="captured-row">
             <span class="captured-icons" id="captured-w" title="Captured by Pandavas"></span>
             <span id="material-adv" style="color:#f5d061; font-weight:700;"></span>
             <span class="captured-icons" id="captured-b" title="Captured by Kauravas"></span>
         </div>
-        <div id="move-log">Battle not started — make the opening move!</div>
-        <div class="btn-group">
-            <button onclick="undoMove()">↩ Undo</button>
-            <button onclick="openSetupModal()">⚔️ New War</button>
-            <button id="sound-btn" class="secondary active" onclick="toggleSound()">🔊 Sound: ON</button>
-            <button id="label-btn" class="secondary active" onclick="toggleLabels()">♔ Labels: ON</button>
-        </div>
-        <div class="btn-group">
-            <button id="cam-classic" class="secondary active" onclick="setCameraPreset('classic')">Classic 3D</button>
-            <button id="cam-war" class="secondary" onclick="setCameraPreset('war')">War Angle</button>
-            <button id="cam-top" class="secondary" onclick="setCameraPreset('top')">Top 2D</button>
-            <button id="cinema-btn" class="secondary active" onclick="toggleCinema()">🎬 Cinema: ON</button>
-            <button class="secondary" onclick="window.location.href='about.html'">📖 Rules & Lore</button>
+        <div class="drawer-label">Move Log</div>
+        <div id="move-log">Battle not started</div>
+        <div class="btn-group" style="margin-top: 10px;">
+            <button class="secondary" style="width:100%;" onclick="window.location.href='about.html'">📖 Rules & Mahabharat Lore</button>
         </div>
     </div>
 
@@ -177,10 +207,17 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let soundEnabled = true;
 
+        function toggleDrawer() {
+            const d = document.getElementById('drawer');
+            const btn = document.getElementById('menu-btn');
+            const isOpen = d.classList.toggle('open');
+            btn.classList.toggle('active', isOpen);
+        }
+
         function toggleSound() {
             soundEnabled = !soundEnabled;
             const btn = document.getElementById('sound-btn');
-            btn.innerText = soundEnabled ? '🔊 Sound: ON' : '🔇 Sound: OFF';
+            btn.innerText = soundEnabled ? '🔊' : '🔇';
             btn.classList.toggle('active', soundEnabled);
         }
 
@@ -306,9 +343,9 @@
         let currentCamPreset = 'classic';
         let cameraLerpTarget = null;
         const CAMERA_PRESETS = {
-            classic: { pos: new THREE.Vector3(0, 11.4, 6.4), target: new THREE.Vector3(0, 0, 0.25) },
-            war:     { pos: new THREE.Vector3(0, 7.2, 9.6),  target: new THREE.Vector3(0, 0.2, 0) },
-            top:     { pos: new THREE.Vector3(0, 14.8, 1.1), target: new THREE.Vector3(0, 0, 0) }
+            classic: { pos: new THREE.Vector3(0, 12.6, 7.2), target: new THREE.Vector3(0, 0, -0.2) },
+            war:     { pos: new THREE.Vector3(0, 7.4, 9.8),  target: new THREE.Vector3(0, 0.2, 0) },
+            top:     { pos: new THREE.Vector3(0, 15.6, 1.1), target: new THREE.Vector3(0, 0, -0.2) }
         };
 
         function setCameraPreset(name, instant = false) {
